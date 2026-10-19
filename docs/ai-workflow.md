@@ -1,7 +1,8 @@
 # ElderCare Companion: AI Workflow & Agent Architecture
 
-## 1. The AI Agent's Purpose
-The ElderCare Companion is a conversational AI assistant designed for the Alexa+ track. Its purpose is to help elderly users manage their appointments, daily routines, reminders, and family coordination effortlessly through natural, empathetic dialogue.
+## 1. The AI Agent's Purpose & MVP Scope
+The ElderCare Companion is a conversational AI assistant designed for the Alexa+ track. Its purpose is to help elderly users manage their appointments and daily schedules through natural, empathetic dialogue. 
+* **MVP Scope Note:** The first working MVP focuses strictly on appointments and daily plans. Medicine reminders, routines, and family coordination are planned future extensions.
 
 ## 2. What Makes the Project Agentic
 Unlike a traditional chatbot that only relies on pre-trained conversational weights, this agent is **agentic** because it can:
@@ -40,7 +41,7 @@ To fulfill user intentions, the agent has access to the following 5 core tools:
 - **Purpose:** Modify specific fields of an existing appointment.
 - **Parameters:**
   - `id` (integer): The unique appointment ID.
-  - `fields_to_change` (object/dict): Key-value pairs of fields to update (e.g., `{"appointment_at": "2026-10-21T11:00:00"}`).
+  - `fields_to_change` (object/dict): Key-value pairs to update. **Restriction:** Can only contain `title`, `appointment_at`, `location`, or `preparation_notes`. It must never attempt to modify database-controlled fields such as `id`, `created_at`, or `updated_at`.
 
 ### 4. `cancel_appointment(id)`
 - **Purpose:** Mark an appointment status as cancelled.
@@ -60,12 +61,11 @@ The agent uses the following logical mapping to choose the correct tool:
 - If the user wants to remove or drop an event → Call `cancel_appointment(id)`.
 - If the user provides additional instructions or items to bring for an existing event → Call `update_appointment` to append to `preparation_notes`.
 
-## 6. When the Agent Must Ask a Clarifying Question
-The agent must **never guess** missing critical information. It must pause and ask a clarifying question when:
+## 6. When the Agent Must Ask a Clarifying Question or Confirmation
+The agent must **never guess** missing critical information or execute destructive changes blindly. It must pause and ask when:
 - **Missing Date or Time:** The user says *"Schedule a doctor visit"* without specifying *when*.
-- **Ambiguous or Similar Appointments:** The user says *"Change my doctor appointment"* but there are two different doctor visits scheduled for the same week.
-- **Vague Update Requests:** The user says *"Move it"* without specifying what "it" refers to or what time to move it to.
-- **Unclear Parameters:** Essential fields required by database constraints are missing.
+- **Ambiguous or Similar Appointments:** Multiple matching records are found.
+- **Action Confirmation Rule:** Before creating, updating, or cancelling any appointment, the agent **must summarize the action and ask for explicit confirmation** (e.g., *"You want to cancel your dental appointment tomorrow at 11 AM. Should I cancel it?"*). The tool is only called after the user answers yes.
 
 ## 7. How Conversation Context Should Work
 To ensure a smooth conversational experience for an elderly user, the agent must maintain short-term dialogue history:
