@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import get_database_connection
+from app.schemas import AppointmentCreate
 
 app = FastAPI()
 
@@ -42,3 +43,40 @@ def get_appointments():
     finally:
         cursor.close()
         connection.close()
+
+
+@app.post("/appointments", status_code=201)
+def create_appointment(appointment: AppointmentCreate):
+    connection = get_database_connection()
+    cursor = connection.cursor()
+
+    try:
+        query = """
+            INSERT INTO appointments
+                (title, appointment_at, location, preparation_notes)
+            VALUES (%s, %s, %s, %s)
+        """
+
+        values = (
+            appointment.title,
+            appointment.appointment_at,
+            appointment.location,
+            appointment.preparation_notes
+        )
+
+        cursor.execute(query, values)
+        connection.commit()
+
+        return {
+            "message": "Appointment created successfully",
+            "id": cursor.lastrowid
+        }
+
+    except Exception:
+        connection.rollback()
+        raise
+
+    finally:
+        cursor.close()
+        connection.close()        
+
