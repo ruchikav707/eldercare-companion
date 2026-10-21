@@ -1,5 +1,8 @@
-from app.database import get_database_connection
 from datetime import date as Date
+from datetime import datetime as DateTime
+
+from app.database import get_database_connection
+
 
 
 def list_appointments() -> dict:
@@ -88,6 +91,77 @@ def get_daily_plan(plan_date: str) -> dict:
             "total_appointments": len(appointments),
             "appointments": appointments
         }
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def create_appointment(
+    title: str,
+    appointment_at: str,
+    location: str | None = None,
+    preparation_notes: str | None = None
+) -> dict:
+    """Create an appointment after the user has confirmed the action."""
+
+    clean_title = title.strip()
+
+    if not clean_title:
+        return {
+            "error": "Appointment title cannot be empty"
+        }
+
+    try:
+        parsed_datetime = DateTime.fromisoformat(appointment_at)
+
+    except ValueError:
+        return {
+            "error": (
+                "appointment_at must use ISO format, "
+                "for example 2026-10-25T10:00:00"
+            )
+        }
+
+    connection = get_database_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(
+            """
+                INSERT INTO appointments
+                    (
+                        title,
+                        appointment_at,
+                        location,
+                        preparation_notes
+                    )
+                VALUES (%s, %s, %s, %s)
+            """,
+            (
+                clean_title,
+                parsed_datetime,
+                location,
+                preparation_notes
+            )
+        )
+
+        connection.commit()
+
+        return {
+            "message": "Appointment created successfully",
+            "id": cursor.lastrowid,
+            "appointment": {
+                "title": clean_title,
+                "appointment_at": parsed_datetime.isoformat(),
+                "location": location,
+                "preparation_notes": preparation_notes
+            }
+        }
+
+    except Exception:
+        connection.rollback()
+        raise
 
     finally:
         cursor.close()

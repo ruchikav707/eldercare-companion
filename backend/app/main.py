@@ -237,7 +237,10 @@ def get_daily_plan(date: datetime.date):
 @app.post("/agent/chat")
 def chat_with_agent(request: AgentChatRequest):
     try:
-        return respond_to_message(request.message)
+        return respond_to_message(
+            request.message,
+            request.session_id
+        )
 
     except Exception as error:
         raise HTTPException(
