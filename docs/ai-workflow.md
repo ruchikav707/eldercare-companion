@@ -15,7 +15,7 @@ Unlike a traditional chatbot that only relies on pre-trained conversational weig
 ## 3. Supported User Intentions
 The ElderCare Companion recognizes the following core user goals:
 - **Schedule an Appointment:** Booking a new medical, personal, or family appointment.
-- **Check All Appointments:** Listing all scheduled appointments without a date filter.
+- **Check All Appointments:** Listing all appointments (including their current statuses) without a date filter.
 - **Check Daily Plan:** Asking what is scheduled for a specific date (today, tomorrow, or a specific date using `get_daily_plan(date)`).
 - **Update Appointment Details:** Modifying the title, time (`appointment_at`), location, or preparation notes of an existing appointment.
 - **Cancel Appointment:** Changing an appointment's status to `cancelled` (soft-cancellation; the database record is not permanently deleted).
@@ -25,7 +25,7 @@ The ElderCare Companion recognizes the following core user goals:
 To fulfill user intentions, the agent has access to the following 5 core tools:
 
 ### 1. `list_appointments()`
-- **Purpose:** Retrieve all scheduled appointments in the database.
+- **Purpose:** Retrieve all appointments, including their current statuses.
 - **Parameters:** None.
 
 ### 2. `create_appointment(title, appointment_at, location, preparation_notes)`

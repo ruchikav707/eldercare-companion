@@ -6,10 +6,10 @@ This document outlines standard test scenarios to verify that the ElderCare Comp
 
 ### Test 1: User asks to view all appointments
 - **User Message:** *"Show me all my appointments."*
-- **What the Agent Should Understand:** The user wants a list of all scheduled events without a date filter.
+- **What the Agent Should Understand:** The user wants a list of all appointments, including their current statuses (scheduled and cancelled).
 - **Tool the Agent Should Select:** `list_appointments()`
 - **Clarification or Confirmation Needed:** None (read-only query).
-- **Expected Assistant Response:** *"Here are all your scheduled appointments: You have a Cardiology appointment at City Hospital on October 28th, 2026 at 10:00 AM."*
+- **Expected Assistant Response:** *"Here are all your appointments: You have a Cardiology appointment at City Hospital on October 28th, 2026 at 10:00 AM (Status: scheduled) and a Dental checkup (Status: cancelled)."*
 - **Expected Database Change:** None (SELECT query only).
 
 ---
@@ -25,12 +25,12 @@ This document outlines standard test scenarios to verify that the ElderCare Comp
 ---
 
 ### Test 3: User creates an appointment with complete details
-- **User Message:** *"Book my cardiology appointment at City Hospital on October 28th, 2026 at 10 AM and remind me to bring medical reports."*
-- **What the Agent Should Understand:** User wants to create a new appointment with title, timestamp, location, and notes.
+- **User Message:** *"Book my cardiology appointment at City Hospital on October 28th, 2026 at 10 AM and add a preparation note to bring medical reports."*
+- **What the Agent Should Understand:** User wants to create a new appointment with title, timestamp, location, and preparation notes.
 - **Tool the Agent Should Select:** `create_appointment(...)` *(strictly after user confirmation)*
-- **Clarification or Confirmation Needed:** **Yes.** The agent must first summarize and ask: *"I am going to schedule your Cardiology appointment at City Hospital for October 28th, 2026 at 10:00 AM. Should I go ahead and book this?"*
-- **Expected Assistant Response:** *(After user says yes)* *"I have successfully booked your Cardiology appointment for October 28th, 2026 at 10:00 AM."*
-- **Expected Database Change:** A new record is inserted into MySQL with `status = 'scheduled'`.
+- **Clarification or Confirmation Needed:** **Yes.** The agent must first summarize and ask: *"I am going to schedule your Cardiology appointment at City Hospital for October 28th, 2026 at 10:00 AM with the preparation note to bring medical reports. Should I go ahead and book this?"*
+- **Expected Assistant Response:** *(After user says yes)* *"I have successfully booked your Cardiology appointment for October 28th, 2026 at 10:00 AM and saved your preparation note."*
+- **Expected Database Change:** A new record is inserted into MySQL with `status = 'scheduled'` and the specified preparation notes.
 
 ---
 
