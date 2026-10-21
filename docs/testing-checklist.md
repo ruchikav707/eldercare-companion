@@ -6,34 +6,23 @@ This checklist defines the test cases required to verify the MVP functionality o
 
 ## Part 1: Implemented MVP Features (Ready for Testing)
 
-### 1. Viewing Appointments
-- [ ] User can view all appointments (`list_appointments()`), including both scheduled and cancelled statuses.
-- [ ] Database returns correct records formatted for the frontend dashboard.
+### 1. Backend REST Endpoints
+- [ ] `GET /appointments` retrieves all appointments including their statuses.
+- [ ] `GET /appointments/daily-plan?date=YYYY-MM-DD` retrieves the daily plan for the specified date.
+- [ ] `POST /appointments` creates a new appointment.
+- [ ] `PUT /appointments/{id}` updates allowed fields (`title`, `appointment_at`, `location`, `preparation_notes`).
+- [ ] `DELETE /appointments/{id}` performs a soft-cancellation (`status = 'cancelled'`).
 
-### 2. Daily Plan
-- [ ] User can request a schedule summary for a specific date (`get_daily_plan(date)`).
-- [ ] Agent correctly parses temporal references like "tomorrow" into `YYYY-MM-DD` format.
+### 2. Completed AI Agent Tests (`POST /agent/chat`)
+- [ ] **Listing Appointments:** User asks to view all appointments and the agent successfully returns them.
+- [ ] **Daily Plan:** User asks about schedule on a specific date and agent invokes `get_daily_plan`.
+- [ ] **Understanding Relative Dates:** Agent correctly interprets relative terms like "tomorrow".
+- [ ] **Missing-Time Clarification:** Agent refuses to guess missing time/date and asks a clarifying question.
+- [ ] **Session Memory:** Agent maintains multi-turn context across conversation turns.
+- [ ] **Yes Confirmation:** User responds "Yes" to a proposed creation action and the record is successfully created.
+- [ ] **No Rejection:** User responds "No" and the agent creates nothing.
 
-### 3. Creating Appointments
-- [ ] User can provide complete details (title, date/time, location, preparation notes).
-- [ ] **Confirmation Rule:** Agent must summarize the action and ask for explicit confirmation *before* calling `create_appointment()`.
-- [ ] Record is successfully inserted into MySQL with `status = 'scheduled'`.
-
-### 4. Updating Appointments
-- [ ] User can update allowed fields (`title`, `appointment_at`, `location`, `preparation_notes`).
-- [ ] **Confirmation Rule:** Agent must ask for explicit confirmation before calling `update_appointment()`.
-- [ ] **Security Rule:** Agent never attempts to update protected fields (`id`, `status` directly, `created_at`, `updated_at`).
-
-### 5. Cancelling Appointments
-- [ ] User can request appointment cancellation.
-- [ ] **Confirmation Rule:** Agent asks for confirmation before calling `cancel_appointment()`.
-- [ ] **Soft-Cancellation:** Record status updates to `cancelled` in MySQL (row is not permanently deleted).
-
-### 6. Clarification & Missing Information
-- [ ] Agent never guesses missing dates or times; asks clarifying questions instead.
-- [ ] When multiple appointments match a query, agent lists options and asks the user to clarify.
-
-### 7. Medical-Safety Guardrails
+### 3. Medical-Safety Guardrails
 - [ ] Agent refuses to diagnose symptoms or recommend medicine dosages/treatments.
 - [ ] When acute danger or severe symptoms are described, agent triggers the emergency override and provides India's public emergency number **112**.
 
@@ -41,6 +30,9 @@ This checklist defines the test cases required to verify the MVP functionality o
 
 ## Part 2: Planned Features (Not Implemented in Current MVP)
 *Note: The following features are outside the scope of the current hackathon MVP and are not currently implemented:*
+- [ ] AI-based appointment update tool (`update_appointment` via agent chat)
+- [ ] AI-based appointment cancellation tool (`cancel_appointment` via agent chat)
+- [ ] Multiple-match appointment disambiguation handling via AI chat
 - [ ] Medicine management / dosage schedules
 - [ ] Real automated push notifications or reminders
 - [ ] Family coordination / caregiver alerts

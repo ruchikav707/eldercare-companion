@@ -16,10 +16,21 @@ This document records development and testing hurdles, bugs, or workflow roadblo
 ---
 
 ## Log Entry 2: Ambiguous Natural Language Appointment Matching
-- **Task Attempted:** Defining how the AI agent handles multiple appointments on the same day (e.g., two doctor visits).
+- **Task Attempted:** Defining how the AI agent handles multiple appointments on the same day (e.g., two doctor visits) during an update request.
 - **Steps Taken:** Tested agent behavior when a user says *"Change my doctor appointment"*.
-- **Expected Result:** Agent immediately updates one without asking.
-- **Actual Result:** Without clarification, the agent risked updating the wrong record.
+- **Expected Result:** Agent asks for clarification instead of updating immediately.
+- **Actual Result:** Initial conversational flow risked modifying the wrong record without proper prompt constraints.
 - **Severity:** High (Data integrity risk)
-- **Workaround:** Implemented strict disambiguation rules in the system prompt requiring the agent to call `list_appointments()` and ask the user to specify which appointment they mean.
-- **Suggested Improvement:** Pass appointment IDs or descriptive time slots directly into conversational prompts when multiple matches occur.
+- **Workaround:** Enforced strict disambiguation rules in the system prompt requiring the agent to ask clarifying questions before proceeding.
+- **Suggested Improvement:** Pass explicit appointment IDs or descriptive time slots into conversational prompts when multiple matches occur.
+
+---
+
+## Log Entry 3: Gemini Model Version 404 Error for New Users
+- **Task Attempted:** Integrating the LLM chat endpoint (`POST /agent/chat`) using `gemini-2.5-flash`.
+- **Steps Taken:** Initialized the Gemini client and sent test prompt payloads.
+- **Expected Result:** Successful model response without authentication or model-not-found errors.
+- **Actual Result:** Received a 404 error indicating the specified model version was unavailable for new API user tiers.
+- **Severity:** High
+- **Workaround:** Switched the model identifier to `gemini-3.8-flash`.
+- **Suggested Improvement:** Document model compatibility and fallback tiers clearly in configuration notes.
