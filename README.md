@@ -50,22 +50,33 @@ The system follows a decoupled client-server architecture:
 - **Prachi:** AI workflow planning, system prompt engineering, test conversation specs, friction logging, and testing checklists.
 
 ## Basic Setup Instructions
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/ruchikav707/eldercare-companion.git
-   cd eldercare-companion
 
-## Backend Setup:
-    ```Bash
-    cd backend
-    pip install -r requirements.txt
-    # Configure your .env file with MySQL credentials
-    uvicorn app.main:app --reload 
-    ```
+### 1. Clone the repository
 
-## Frontend Setup:
-    ```Bash
-    cd frontend
-    npm install
-    npm run dev
-    ```
+```bash
+git clone https://github.com/ruchikav707/eldercare-companion.git
+cd eldercare-companion
+```
+
+### 2. Backend setup
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
+uvicorn app.main:app --reload
+```
+
+Update the newly created `.env` file with your MySQL credentials and Gemini API key.
+
+### 3. Frontend setup
+
+Open another terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
