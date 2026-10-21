@@ -52,7 +52,7 @@ The system follows a decoupled client-server architecture:
 ## Basic Setup Instructions
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/ruchikav707/eldercare-companion.git](https://github.com/ruchikav707/eldercare-companion.git)
+   git clone https://github.com/ruchikav707/eldercare-companion.git
    cd eldercare-companion
 
 ## Backend Setup:
