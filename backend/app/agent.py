@@ -1,21 +1,25 @@
 import json
+from datetime import date
 
 from app.ai_client import GEMINI_MODEL, get_gemini_client
-from app.agent_tools import list_appointments
+from app.agent_tools import get_daily_plan, list_appointments
 
 
 SYSTEM_PROMPT = """
 You are ElderCare Companion, a warm and patient simulated Alexa+ assistant.
 
-Current capabilities:
-- You can retrieve stored appointments using list_appointments.
+Available capabilities:
+- Use list_appointments to retrieve every stored appointment.
+- Use get_daily_plan to retrieve scheduled appointments for one date.
 
 Rules:
-- Use list_appointments whenever the user asks about their appointments.
+- Use list_appointments when the user asks for all appointments.
+- Use get_daily_plan when the user asks about a particular date,
+  today, tomorrow or a daily plan.
 - Never invent appointment information.
-- Base your answer only on the tool result.
+- Base appointment answers only on tool results.
 - Clearly mention when an appointment is cancelled.
-- Do not diagnose conditions or recommend medicines or treatments.
+- Never diagnose conditions or recommend medicines or treatments.
 - Keep responses clear, respectful and concise.
 """
 
@@ -34,13 +38,55 @@ LIST_APPOINTMENTS_TOOL = {
 }
 
 
+GET_DAILY_PLAN_TOOL = {
+    "type": "function",
+    "name": "get_daily_plan",
+    "description": (
+        "Retrieves scheduled appointments for one specific calendar date."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "date": {
+                "type": "string",
+                "description": "Calendar date in YYYY-MM-DD format"
+            }
+        },
+        "required": ["date"]
+    }
+}
+
+
+AVAILABLE_TOOLS = [
+    LIST_APPOINTMENTS_TOOL,
+    GET_DAILY_PLAN_TOOL
+]
+
+
+def execute_tool(tool_name: str, arguments: dict) -> dict:
+    if tool_name == "list_appointments":
+        return list_appointments()
+
+    if tool_name == "get_daily_plan":
+        return get_daily_plan(arguments["date"])
+
+    return {
+        "error": f"Unsupported tool: {tool_name}"
+    }
+
+
 def respond_to_message(message: str) -> dict:
     client = get_gemini_client()
+    current_date = date.today().isoformat()
 
     interaction = client.interactions.create(
         model=GEMINI_MODEL,
-        input=f"{SYSTEM_PROMPT}\n\nUser message: {message}",
-        tools=[LIST_APPOINTMENTS_TOOL]
+        input=(
+            f"{SYSTEM_PROMPT}\n\n"
+            f"Current date: {current_date}\n"
+            f"User message: {message}"
+        ),
+        tools=AVAILABLE_TOOLS
     )
 
     tool_call = next(
@@ -58,18 +104,15 @@ def respond_to_message(message: str) -> dict:
             "tool_used": None
         }
 
-    if tool_call.name != "list_appointments":
-        return {
-            "reply": "I could not select a supported tool.",
-            "tool_used": tool_call.name
-        }
-
-    tool_result = list_appointments()
+    tool_result = execute_tool(
+        tool_call.name,
+        tool_call.arguments
+    )
 
     final_interaction = client.interactions.create(
         model=GEMINI_MODEL,
         previous_interaction_id=interaction.id,
-        tools=[LIST_APPOINTMENTS_TOOL],
+        tools=AVAILABLE_TOOLS,
         input=[
             {
                 "type": "function_result",
