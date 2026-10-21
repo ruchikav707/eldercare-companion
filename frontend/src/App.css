@@ -1,4 +1,3 @@
-
 #root {
   min-height: 100vh;
 }
@@ -10,11 +9,12 @@
 }
 
 .dashboard-header {
-  background: #174c43;
+  background: linear-gradient(135deg, #174c43, #21695d);
   color: #ffffff;
   padding: 36px;
   border-radius: 18px;
-  margin-bottom: 36px;
+  margin-bottom: 28px;
+  box-shadow: 0 10px 28px rgba(20, 55, 45, 0.15);
 }
 
 .eyebrow {
@@ -37,10 +37,202 @@
   color: #f0f7f5;
 }
 
-.appointments-section h2 {
+/* Shared section heading */
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.section-heading h2 {
   font-size: 28px;
+  line-height: 1.3;
   color: #173b35;
-  margin: 0 0 22px;
+  margin: 0;
+}
+
+/* Alexa+ simulated chat */
+
+.chat-section {
+  background: #ffffff;
+  border: 1px solid #d5e0dc;
+  border-radius: 18px;
+  padding: 28px;
+  margin-bottom: 36px;
+  box-shadow: 0 5px 18px rgba(20, 55, 45, 0.08);
+}
+
+.chat-section .section-heading {
+  margin-bottom: 22px;
+}
+
+.chat-eyebrow {
+  color: #287766;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.assistant-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #e6f4ed;
+  color: #205b42;
+  padding: 8px 13px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #2e8b6e;
+  box-shadow: 0 0 0 4px rgba(46, 139, 110, 0.14);
+}
+
+.chat-messages {
+  min-height: 250px;
+  max-height: 420px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #f3f8f6;
+  border: 1px solid #dce8e3;
+  border-radius: 14px;
+  padding: 20px;
+  scroll-behavior: smooth;
+}
+
+.chat-message {
+  width: fit-content;
+  max-width: 78%;
+  padding: 14px 17px;
+  border-radius: 16px;
+  overflow-wrap: anywhere;
+}
+
+.chat-message p {
+  font-size: 17px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.chat-message.assistant {
+  align-self: flex-start;
+  color: #263b36;
+  background: #ffffff;
+  border: 1px solid #d4e2dc;
+  border-bottom-left-radius: 5px;
+}
+
+.chat-message.user {
+  align-self: flex-end;
+  color: #ffffff;
+  background: #174c43;
+  border-bottom-right-radius: 5px;
+}
+
+.chat-message .message-sender {
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 5px;
+  color: #287766;
+}
+
+.chat-message.user .message-sender {
+  color: #cce9e1;
+}
+
+.thinking-message {
+  opacity: 0.8;
+}
+
+.chat-error {
+  background: #fff3f2;
+  border: 1px solid #d99b96;
+  color: #8b2424;
+  font-size: 16px;
+  line-height: 1.5;
+  padding: 12px 14px;
+  margin: 14px 0 0;
+  border-radius: 10px;
+}
+
+.chat-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.chat-form input {
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  padding: 12px 16px;
+  border: 2px solid #bdcec8;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #173b35;
+  font: inherit;
+  font-size: 17px;
+}
+
+.chat-form input::placeholder {
+  color: #60756e;
+}
+
+.chat-form input:focus {
+  outline: 3px solid rgba(40, 119, 102, 0.18);
+  border-color: #287766;
+}
+
+.chat-form button,
+.refresh-button {
+  border: none;
+  border-radius: 12px;
+  background: #287766;
+  color: #ffffff;
+  padding: 12px 22px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.chat-form button:hover:not(:disabled),
+.refresh-button:hover:not(:disabled) {
+  background: #1f6254;
+  transform: translateY(-1px);
+}
+
+.chat-form button:focus-visible,
+.refresh-button:focus-visible {
+  outline: 3px solid rgba(40, 119, 102, 0.3);
+  outline-offset: 3px;
+}
+
+.chat-form button:disabled,
+.refresh-button:disabled {
+  background: #9db7ae;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Appointment dashboard */
+
+.appointments-section .section-heading {
+  margin-bottom: 22px;
 }
 
 .appointments-list {
@@ -123,6 +315,22 @@
   margin: 0;
 }
 
+/* Visually hidden accessibility label */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Mobile layout */
+
 @media (max-width: 600px) {
   .dashboard {
     padding: 20px 14px;
@@ -130,7 +338,7 @@
 
   .dashboard-header {
     padding: 26px 20px;
-    margin-bottom: 28px;
+    margin-bottom: 22px;
   }
 
   .dashboard-header h1 {
@@ -138,11 +346,41 @@
   }
 
   .subtitle {
-    font-size: 18px;
+    font-size: 17px;
   }
 
-  .appointments-section h2 {
+  .chat-section {
+    padding: 20px 14px;
+    margin-bottom: 28px;
+  }
+
+  .section-heading h2 {
     font-size: 25px;
+  }
+
+  .assistant-status {
+    font-size: 14px;
+  }
+
+  .chat-messages {
+    min-height: 220px;
+    padding: 14px;
+  }
+
+  .chat-message {
+    max-width: 92%;
+  }
+
+  .chat-message p {
+    font-size: 16px;
+  }
+
+  .chat-form {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-form button {
+    min-height: 50px;
   }
 
   .appointment-card {
