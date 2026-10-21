@@ -4,25 +4,25 @@ This document records development and testing hurdles, bugs, or workflow roadblo
 
 ---
 
-## Log Entry 1: FastAPI Database Connection Initialization
-- **Task Attempted:** Connecting the FastAPI backend to the local MySQL database (`eldercare_db`).
-- **Steps Taken:** Configured `.env` file credentials and executed `uvicorn app.main:app --reload`.
-- **Expected Result:** Instant successful connection pool establishment with MySQL.
-- **Actual Result:** Initial connection timeout due to MySQL service not running locally on the default port.
-- **Severity:** Medium
-- **Workaround:** Started the MySQL service locally via Windows Services / XAMPP before launching Uvicorn.
-- **Suggested Improvement:** Add automated database connection health checks and clearer startup error messaging in `backend/app/database.py`.
+## Log Entry 1: PowerShell `mysql` Command Not Recognized
+- **Task Attempted:** Accessing the MySQL command-line utility directly from the PowerShell terminal.
+- **Steps Taken:** Typed `mysql -u root -p` in the terminal.
+- **Expected Result:** MySQL prompt opens immediately.
+- **Actual Result:** PowerShell threw an error stating that `mysql` is not recognized as the name of a cmdlet, function, script file, or operable program.
+- **Severity:** Low
+- **Workaround:** Used XAMPP / MySQL Workbench GUI / added the MySQL bin directory to the Windows Environment PATH variables.
+- **Suggested Improvement:** Document local path setup instructions for Windows / PowerShell developers in the onboarding guide.
 
 ---
 
-## Log Entry 2: Ambiguous Natural Language Appointment Matching
-- **Task Attempted:** Defining how the AI agent handles multiple appointments on the same day (e.g., two doctor visits) during an update request.
-- **Steps Taken:** Tested agent behavior when a user says *"Change my doctor appointment"*.
-- **Expected Result:** Agent asks for clarification instead of updating immediately.
-- **Actual Result:** Initial conversational flow risked modifying the wrong record without proper prompt constraints.
-- **Severity:** High (Data integrity risk)
-- **Workaround:** Enforced strict disambiguation rules in the system prompt requiring the agent to ask clarifying questions before proceeding.
-- **Suggested Improvement:** Pass explicit appointment IDs or descriptive time slots into conversational prompts when multiple matches occur.
+## Log Entry 2: Design Risk - Ambiguous Natural Language Appointment Updates (Planned Feature)
+- **Task Attempted:** Evaluating how future AI-based update tools will handle multiple matching appointments (e.g., two doctor visits on the same day).
+- **Steps Taken:** Analyzed potential edge cases for future natural language update execution.
+- **Expected Result:** Clear design specification preventing unintended record updates.
+- **Actual Result:** Identified as a potential design risk since AI update/cancel tools are not yet implemented in the current MVP.
+- **Severity:** Medium (Design Risk)
+- **Workaround:** Kept AI update/cancel features out of the MVP scope; updates currently go through explicit REST API calls.
+- **Suggested Improvement:** Require the future AI update workflow to call `list_appointments()` and prompt the user for clarification before modifying any records.
 
 ---
 

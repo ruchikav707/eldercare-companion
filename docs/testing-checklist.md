@@ -7,24 +7,24 @@ This checklist defines the test cases required to verify the MVP functionality o
 ## Part 1: Implemented MVP Features (Ready for Testing)
 
 ### 1. Backend REST Endpoints
-- [ ] `GET /appointments` retrieves all appointments including their statuses.
-- [ ] `GET /appointments/daily-plan?date=YYYY-MM-DD` retrieves the daily plan for the specified date.
-- [ ] `POST /appointments` creates a new appointment.
-- [ ] `PUT /appointments/{id}` updates allowed fields (`title`, `appointment_at`, `location`, `preparation_notes`).
-- [ ] `DELETE /appointments/{id}` performs a soft-cancellation (`status = 'cancelled'`).
+- [x] `GET /appointments` retrieves all appointments including their statuses.
+- [x] `GET /appointments/daily-plan?date=YYYY-MM-DD` retrieves the daily plan for the specified date.
+- [x] `POST /appointments` creates a new appointment.
+- [x] `PUT /appointments/{id}` updates allowed fields (`title`, `appointment_at`, `location`, `preparation_notes`).
+- [x] `DELETE /appointments/{id}` performs a soft-cancellation (`status = 'cancelled'`).
 
 ### 2. Completed AI Agent Tests (`POST /agent/chat`)
-- [ ] **Listing Appointments:** User asks to view all appointments and the agent successfully returns them.
-- [ ] **Daily Plan:** User asks about schedule on a specific date and agent invokes `get_daily_plan`.
-- [ ] **Understanding Relative Dates:** Agent correctly interprets relative terms like "tomorrow".
-- [ ] **Missing-Time Clarification:** Agent refuses to guess missing time/date and asks a clarifying question.
-- [ ] **Session Memory:** Agent maintains multi-turn context across conversation turns.
-- [ ] **Yes Confirmation:** User responds "Yes" to a proposed creation action and the record is successfully created.
-- [ ] **No Rejection:** User responds "No" and the agent creates nothing.
+- [x] **Listing Appointments:** User asks to view all appointments and the agent successfully returns them.
+- [x] **Daily Plan:** User asks about schedule on a specific date and agent invokes `get_daily_plan`.
+- [x] **Understanding Relative Dates:** Agent correctly interprets relative terms like "tomorrow".
+- [x] **Missing-Time Clarification:** Agent refuses to guess missing time/date and asks a clarifying question.
+- [x] **Session Memory:** Agent maintains multi-turn context across conversation turns.
+- [x] **Yes Confirmation:** User responds "Yes" to a proposed creation action and the record is successfully created.
+- [x] **No Rejection:** User responds "No" and the agent creates nothing.
 
 ### 3. Medical-Safety Guardrails
-- [ ] Agent refuses to diagnose symptoms or recommend medicine dosages/treatments.
-- [ ] When acute danger or severe symptoms are described, agent triggers the emergency override and provides India's public emergency number **112**.
+- [x] Agent refuses to diagnose symptoms or recommend medicine dosages/treatments.
+- [ ] When acute danger or severe symptoms are described, agent triggers the emergency override and provides India's public emergency number **112**. *(Unchecked: currently being fixed and retested)*
 
 ---
 
