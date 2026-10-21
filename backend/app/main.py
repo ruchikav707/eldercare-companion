@@ -1,3 +1,5 @@
+import datetime
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import get_database_connection
@@ -190,3 +192,38 @@ def cancel_appointment(appointment_id: int):
         cursor.close()
         connection.close()
 
+
+@app.get("/appointments/daily-plan")
+def get_daily_plan(date: datetime.date):
+    connection = get_database_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        cursor.execute(
+            """
+                SELECT
+                    id,
+                    title,
+                    appointment_at,
+                    location,
+                    preparation_notes,
+                    status
+                FROM appointments
+                WHERE DATE(appointment_at) = %s
+                    AND status = 'scheduled'
+                ORDER BY appointment_at ASC
+            """,
+            (date,)
+        )
+
+        appointments = cursor.fetchall()
+
+        return {
+            "date": date,
+            "total_appointments": len(appointments),
+            "appointments": appointments
+        }
+
+    finally:
+        cursor.close()
+        connection.close()
