@@ -2,13 +2,13 @@
 
 ## 1. The AI Agent's Purpose & MVP Scope
 The ElderCare Companion is a conversational AI assistant designed for the Alexa+ track. Its purpose is to help elderly users manage their appointments and daily schedules through natural, empathetic dialogue. 
-* **MVP Scope Note:** The first working MVP focuses strictly on appointments and daily plans. Medicine reminders, routines, and family coordination are planned future extensions.
+- **MVP Scope Note:** The current MVP promises only appointments and daily plans. Medicine management, real reminders, family coordination, emergency calling, MCP, and real Alexa integration are not part of the current MVP.
 
 ## 2. What Makes the Project Agentic
 Unlike a traditional chatbot that only relies on pre-trained conversational weights, this agent is **agentic** because it can:
 - Parse user intent from natural language.
 - Select and execute specific tools (functions) dynamically.
-- Read, create, update, and cancel structured records in the MySQL database (`eldercare_db`).
+- Read, create, update, and soft-cancel structured records in the MySQL database (`eldercare_db`).
 - Maintain multi-turn conversational context to handle follow-up requests (e.g., changing appointment times).
 - Fall back on safety rules and clarification prompts when user requests are ambiguous or unsafe.
 
@@ -16,9 +16,8 @@ Unlike a traditional chatbot that only relies on pre-trained conversational weig
 The ElderCare Companion recognizes the following core user goals:
 - **Schedule an Appointment:** Booking a new medical, personal, or family appointment.
 - **Check Schedule / Daily Plan:** Asking what is scheduled for a specific date (today, tomorrow, or a specific day).
-- **Update Appointment Details:** Modifying the time, location, or notes of an existing appointment.
-- **Cancel Appointment:** Marking an active appointment as cancelled.
-- **Add Preparation Notes:** Appending instructions or checklists to an appointment.
+- **Update Appointment Details:** Modifying the title, time (`appointment_at`), location, or preparation notes of an existing appointment.
+- **Cancel Appointment:** Changing an appointment's status to `cancelled` (soft-cancellation; the database record is not permanently deleted).
 - **General Inquiries / Safety Checks:** Handling everyday questions while respecting strict medical and safety guardrails.
 
 ## 4. Tool Definitions and Required Parameters
@@ -41,10 +40,10 @@ To fulfill user intentions, the agent has access to the following 5 core tools:
 - **Purpose:** Modify specific fields of an existing appointment.
 - **Parameters:**
   - `id` (integer): The unique appointment ID.
-  - `fields_to_change` (object/dict): Key-value pairs to update. **Restriction:** Can only contain `title`, `appointment_at`, `location`, or `preparation_notes`. It must never attempt to modify database-controlled fields such as `id`, `created_at`, or `updated_at`.
+  - `fields_to_change` (object/dict): Key-value pairs to update. **Restriction:** The agent may update only `title`, `appointment_at`, `location`, or `preparation_notes`. The agent must never update `id`, `status` directly, `created_at`, or `updated_at`.
 
 ### 4. `cancel_appointment(id)`
-- **Purpose:** Mark an appointment status as cancelled.
+- **Purpose:** Soft-cancel an appointment by changing its status to `cancelled`. (The database record is never permanently deleted).
 - **Parameters:**
   - `id` (integer): The unique appointment ID.
 
@@ -56,39 +55,25 @@ To fulfill user intentions, the agent has access to the following 5 core tools:
 ## 5. Decision Rules for Selecting Tools
 The agent uses the following logical mapping to choose the correct tool:
 - If the user asks about what is coming up or scheduled on a specific day → Call `list_appointments(date)` or `get_daily_plan(date)`.
-- If the user wants to add a new event, checkup, or visitor → Call `create_appointment(...)` with extracted parameters.
-- If the user wants to change the time, location, or notes of an existing event → First identify the appointment ID (via listing if needed), then call `update_appointment(id, fields_to_change)`.
-- If the user wants to remove or drop an event → Call `cancel_appointment(id)`.
-- If the user provides additional instructions or items to bring for an existing event → Call `update_appointment` to append to `preparation_notes`.
+- If the user wants to add a new event → Ask for confirmation, then call `create_appointment(...)`.
+- If the user wants to change allowed fields of an existing event → Ask for confirmation, then call `update_appointment(id, fields_to_change)`.
+- If the user wants to cancel an event → Ask for confirmation, then call `cancel_appointment(id)`.
 
-## 6. When the Agent Must Ask a Clarifying Question or Confirmation
-The agent must **never guess** missing critical information or execute destructive changes blindly. It must pause and ask when:
-- **Missing Date or Time:** The user says *"Schedule a doctor visit"* without specifying *when*.
-- **Ambiguous or Similar Appointments:** Multiple matching records are found.
-- **Action Confirmation Rule:** Before creating, updating, or cancelling any appointment, the agent **must summarize the action and ask for explicit confirmation** (e.g., *"You want to cancel your dental appointment tomorrow at 11 AM. Should I cancel it?"*). The tool is only called after the user answers yes.
+## 6. Clarification & Confirmation Rules
+The agent must follow strict behavioral guardrails before executing tools:
+- **Never Guess Missing Dates or Times:** The agent must never guess a missing date or time and must ask a clarifying question.
+- **Ambiguous Matches:** If multiple appointments could match the user's request, the agent must ask which appointment the user means.
+- **Mandatory Confirmation:** The agent must ask for explicit confirmation before creating, updating, or cancelling an appointment.
 
-## 7. How Conversation Context Should Work
-To ensure a smooth conversational experience for an elderly user, the agent must maintain short-term dialogue history:
-- **Reference Resolution:** If a user says *"Change it to 11 AM"* right after discussing a Cardiology appointment, the agent must remember the active appointment ID from the previous turn.
-- **Multi-Turn State:** The agent keeps track of pending clarifications (e.g., if it asked *"Which day would you like to visit?"*, the user's next response is treated as the date answer).
-- **Session Memory:** Context is preserved for the duration of the active chat session so the senior citizen doesn't have to repeat names or dates unnecessarily.
-
-## 8. Safety Rules
-ElderCare Companion operates under strict medical and ethical safety guardrails:
+## 7. Safety Rules
+ElderCare Companion operates under strict medical and safety guardrails:
 - **The Agent Must NOT:**
-  - Diagnose any medical condition.
-  - Recommend medicines, dosages, or treatments.
+  - Diagnose any medical condition or recommend medicines, dosages, or treatments.
   - Replace a doctor or professional medical advice.
-  - Claim that an emergency has been handled or dispatched.
-- **The Agent MAY:**
-  - Store user-provided medicine schedules or appointment details.
-  - Provide reminders for checkups and routines.
-  - Show emergency contact numbers.
-  - Encourage the user to contact a qualified healthcare professional.
-  - Advise contacting local emergency services immediately if the user describes acute danger or severe symptoms.
+  - Claim that it contacted or dispatched emergency services.
+- **Emergency Handling:** Use India's emergency number `112` when advising the user to contact local emergency services in case of severe symptoms or acute danger.
 
-## 9. & 10. Realistic Test Conversations & Expected Tool Calls
-
+## 8. Realistic Test Conversations Summary
 ### Test 1: Creating an Appointment
 - **User Input:** *"Book my cardiology appointment at City Hospital on October 20th at 10 AM and remind me to bring medical reports."*
 - **Agent Reasoning:** The user wants to store a new event. All required parameters are present.
