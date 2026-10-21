@@ -5,31 +5,31 @@ This document outlines standard test scenarios to verify that the ElderCare Comp
 ---
 
 ### Test 1: User asks to view all appointments
-- **User Message:** *"Show me my appointments for October 20th, 2026."*
-- **What the Agent Should Understand:** The user wants a list of scheduled events for a specific date.
-- **Tool the Agent Should Select:** `list_appointments(date="2026-10-20")`
+- **User Message:** *"Show me all my appointments."*
+- **What the Agent Should Understand:** The user wants a list of all scheduled events without a date filter.
+- **Tool the Agent Should Select:** `list_appointments()`
 - **Clarification or Confirmation Needed:** None (read-only query).
-- **Expected Assistant Response:** *"Here are your appointments for October 20th: You have a Cardiology appointment at City Hospital at 10:00 AM."*
+- **Expected Assistant Response:** *"Here are all your scheduled appointments: You have a Cardiology appointment at City Hospital on October 28th, 2026 at 10:00 AM."*
 - **Expected Database Change:** None (SELECT query only).
 
 ---
 
 ### Test 2: User asks, "What do I have tomorrow?"
-- **User Message:** *"What do I have tomorrow?"* (Assuming current date is 2026-10-19)
-- **What the Agent Should Understand:** Resolves "tomorrow" to date `2026-10-20` and requests schedule items.
-- **Tool the Agent Should Select:** `list_appointments(date="2026-10-20")` (or `get_daily_plan(date="2026-10-20")`)
+- **User Message:** *"What do I have tomorrow?"* (Assuming current date is October 27th, 2026)
+- **What the Agent Should Understand:** Resolves "tomorrow" to date `2026-10-28` and requests the daily plan.
+- **Tool the Agent Should Select:** `get_daily_plan(date="2026-10-28")`
 - **Clarification or Confirmation Needed:** None.
-- **Expected Assistant Response:** *"Tomorrow, October 20th, you have a Cardiology appointment at City Hospital scheduled for 10:00 AM."*
+- **Expected Assistant Response:** *"Tomorrow, October 28th, 2026, you have a Cardiology appointment at City Hospital scheduled for 10:00 AM."*
 - **Expected Database Change:** None.
 
 ---
 
 ### Test 3: User creates an appointment with complete details
-- **User Message:** *"Book my cardiology appointment at City Hospital on October 20th at 10 AM and remind me to bring medical reports."*
+- **User Message:** *"Book my cardiology appointment at City Hospital on October 28th, 2026 at 10 AM and remind me to bring medical reports."*
 - **What the Agent Should Understand:** User wants to create a new appointment with title, timestamp, location, and notes.
-- **Tool the Agent Should Select:** `create_appointment(...)` *(after user confirmation)*
-- **Clarification or Confirmation Needed:** **Yes.** The agent must first summarize and ask: *"I am going to schedule your Cardiology appointment at City Hospital for October 20th at 10:00 AM. Should I go ahead and book this?"*
-- **Expected Assistant Response:** *(After user says yes)* *"I have successfully booked your Cardiology appointment for October 20th at 10:00 AM."*
+- **Tool the Agent Should Select:** `create_appointment(...)` *(strictly after user confirmation)*
+- **Clarification or Confirmation Needed:** **Yes.** The agent must first summarize and ask: *"I am going to schedule your Cardiology appointment at City Hospital for October 28th, 2026 at 10:00 AM. Should I go ahead and book this?"*
+- **Expected Assistant Response:** *(After user says yes)* *"I have successfully booked your Cardiology appointment for October 28th, 2026 at 10:00 AM."*
 - **Expected Database Change:** A new record is inserted into MySQL with `status = 'scheduled'`.
 
 ---
@@ -47,9 +47,9 @@ This document outlines standard test scenarios to verify that the ElderCare Comp
 ### Test 5: User confirms a proposed appointment
 - **User Message:** *(Following an agent confirmation prompt)* *"Yes, please book it."*
 - **What the Agent Should Understand:** User has confirmed the pending creation action.
-- **Tool the Agent Should Select:** `create_appointment(title="Physiotherapist visit", appointment_at="2026-10-21T11:00:00", location="Clinic", preparation_notes="")`
+- **Tool the Agent Should Select:** `create_appointment(title="Physiotherapist visit", appointment_at="2026-10-29T11:00:00", location="Clinic", preparation_notes="")`
 - **Clarification or Confirmation Needed:** None (confirmation received).
-- **Expected Assistant Response:** *"Your physiotherapist visit is now booked for October 21st at 11:00 AM."*
+- **Expected Assistant Response:** *"Your physiotherapist visit is now booked for October 29th, 2026 at 11:00 AM."*
 - **Expected Database Change:** Record inserted into database.
 
 ---
@@ -67,7 +67,7 @@ This document outlines standard test scenarios to verify that the ElderCare Comp
 ### Test 7: User updates an appointment
 - **User Message:** *"Move my eye checkup location to North Clinic."* (Assuming ID 2)
 - **What the Agent Should Understand:** User wants to update the location of an existing appointment.
-- **Tool the Agent Should Select:** `update_appointment(id=2, fields_to_change={"location": "North Clinic"})` *(after confirmation)*
+- **Tool the Agent Should Select:** `update_appointment(id=2, fields_to_change={"location": "North Clinic"})` *(strictly after confirmation)*
 - **Clarification or Confirmation Needed:** **Yes.** Agent asks: *"You want to change your eye checkup location to North Clinic. Should I update this for you?"*
 - **Expected Assistant Response:** *"I have updated your eye checkup location to North Clinic."*
 - **Expected Database Change:** MySQL record ID 2 has its `location` column updated.
@@ -77,9 +77,9 @@ This document outlines standard test scenarios to verify that the ElderCare Comp
 ### Test 8: Multiple appointments match an update request
 - **User Message:** *"Change my doctor appointment time."* (Lookup returns two doctor appointments on the same day: General Checkup at 9 AM and Cardiology at 2 PM).
 - **What the Agent Should Understand:** Ambiguity detected; multiple records match "doctor appointment".
-- **Tool the Agent Should Select:** `list_appointments` (to verify records) followed by clarification.
+- **Tool the Agent Should Select:** `list_appointments()` (to inspect records) followed by clarification.
 - **Clarification or Confirmation Needed:** **Yes.**
-- **Expected Assistant Response:** *"I found two doctor appointments for tomorrow: your General Checkup at 9:00 AM and your Cardiology appointment at 2:00 PM. Which one would you like to change?"*
+- **Expected Assistant Response:** *"I found multiple doctor appointments: your General Checkup at 9:00 AM and your Cardiology appointment at 2:00 PM. Which one would you like to change?"*
 - **Expected Database Change:** None until the specific appointment is selected.
 
 ---
@@ -87,7 +87,7 @@ This document outlines standard test scenarios to verify that the ElderCare Comp
 ### Test 9: User cancels an appointment after confirmation
 - **User Message:** *"Cancel my dental checkup."* (Assuming ID 3)
 - **What the Agent Should Understand:** User wants to soft-cancel appointment ID 3.
-- **Tool the Agent Should Select:** `cancel_appointment(id=3)` *(after confirmation)*
+- **Tool the Agent Should Select:** `cancel_appointment(id=3)` *(strictly after confirmation)*
 - **Clarification or Confirmation Needed:** **Yes.** Agent asks: *"You want to cancel your dental checkup. Should I cancel it?"*
 - **Expected Assistant Response:** *"I have cancelled your dental checkup."*
 - **Expected Database Change:** MySQL record ID 3 has its `status` column changed to `'cancelled'`. (The row is not deleted).
@@ -117,7 +117,7 @@ This document outlines standard test scenarios to verify that the ElderCare Comp
 ### Test 12: A requested appointment does not exist
 - **User Message:** *"Change my piano lesson time to 4 PM."* (Lookup returns no piano lesson).
 - **What the Agent Should Understand:** Target appointment cannot be found in the database.
-- **Tool the Agent Should Select:** `list_appointments(...)` (which returns empty)
+- **Tool the Agent Should Select:** `list_appointments()` (which returns empty or checks records)
 - **Clarification or Confirmation Needed:** None.
-- **Expected Assistant Response:** *"I couldn't find a piano lesson on your schedule. Would you like me to check your appointments for another day or schedule a new one?"*
+- **Expected Assistant Response:** *"I couldn't find a piano lesson on your schedule. Would you like me to check your appointments or schedule a new one?"*
 - **Expected Database Change:** None.
