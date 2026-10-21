@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 
 
 load_dotenv()
@@ -17,4 +18,14 @@ def get_gemini_client():
             "GEMINI_API_KEY is missing from the backend .env file"
         )
 
-    return genai.Client(api_key=api_key)
+    http_options = types.HttpOptions(
+        timeout=30_000,
+        retry_options=types.HttpRetryOptions(
+            attempts=1
+        )
+    )
+
+    return genai.Client(
+        api_key=api_key,
+        http_options=http_options
+    )

@@ -9,6 +9,44 @@ from app.agent_tools import (
 from app.ai_client import GEMINI_MODEL, get_gemini_client
 
 
+EMERGENCY_PHRASES = (
+    "severe chest pain",
+    "trouble breathing",
+    "difficulty breathing",
+    "cannot breathe",
+    "can't breathe",
+    "not breathing",
+    "unconscious",
+    "heavy bleeding"
+)
+
+
+def get_emergency_response(message: str) -> dict | None:
+    """Return immediate India-specific guidance for clear emergencies."""
+
+    normalized_message = message.casefold()
+
+    emergency_detected = any(
+        phrase in normalized_message
+        for phrase in EMERGENCY_PHRASES
+    )
+
+    if not emergency_detected:
+        return None
+
+    return {
+        "reply": (
+            "This may be an emergency. If you are in India, "
+            "call 112 immediately or ask someone nearby to call. "
+            "Go to the nearest emergency department now. "
+            "I cannot contact emergency services for you. "
+            "Please do not wait for a response from this assistant."
+        ),
+        "tool_used": None,
+        "confirmation_required": False
+    }
+
+
 SYSTEM_PROMPT = """
 You are ElderCare Companion, a warm and patient simulated Alexa+ assistant.
 
@@ -32,7 +70,13 @@ General rules:
 - Clearly mention when an appointment is cancelled.
 - Never diagnose medical conditions.
 - Never recommend medicines, dosages or treatments.
-- Encourage professional or emergency help when appropriate.
+- The intended users are located in India.
+- If the user describes severe symptoms or immediate danger, clearly
+  advise them to call India's emergency number 112 or go to the nearest
+  emergency department immediately.
+- Never mention 911 unless the user explicitly says they are in a country
+  where 911 is the correct emergency number.
+- Never claim that you contacted or dispatched emergency services.
 - Keep responses clear, respectful and concise.
 """
 
@@ -260,6 +304,13 @@ def respond_to_message(
     session_id: str
 ) -> dict:
     """Respond to one message while preserving session context."""
+
+    emergency_response = get_emergency_response(message)
+
+    if emergency_response is not None:
+        PENDING_ACTIONS.pop(session_id, None)
+        SESSION_INTERACTIONS.pop(session_id, None)
+        return emergency_response
 
     if session_id in PENDING_ACTIONS:
         return complete_pending_action(message, session_id)
