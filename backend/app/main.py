@@ -3,7 +3,12 @@ import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import get_database_connection
-from app.schemas import AppointmentCreate, AppointmentUpdate
+from app.schemas import (
+    AgentChatRequest,
+    AppointmentCreate,
+    AppointmentUpdate
+)
+from app.agent import respond_to_message
 
 app = FastAPI()
 
@@ -227,3 +232,15 @@ def get_daily_plan(date: datetime.date):
     finally:
         cursor.close()
         connection.close()
+
+
+@app.post("/agent/chat")
+def chat_with_agent(request: AgentChatRequest):
+    try:
+        return respond_to_message(request.message)
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=502,
+            detail="AI service is temporarily unavailable"
+        ) from error
