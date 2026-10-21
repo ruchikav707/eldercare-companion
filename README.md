@@ -23,7 +23,7 @@ The application simulates an advanced Alexa+ conversational ecosystem tailored f
 The system follows a decoupled client-server architecture:
 - **Frontend:** React dashboard (built by Siya) providing a clean visual interface for appointments.
 - **Backend:** FastAPI REST API (built by Ruchika) handling request validation and MySQL database operations.
-- **AI Layer:** Conversational agent workflow routing user intents through currently implemented tool definitions (`list_appointments`, `get_daily_plan`, `create_appointment`). Note: AI-based update and cancel tools are planned and not implemented yet (updates/cancellations currently work via REST APIs).
+- **AI Layer:** Conversational agent workflow and prompt engineering (built by Prachi) routing user intents through currently implemented tool definitions (`list_appointments`, `get_daily_plan`, `create_appointment`). Note: AI-based update and cancel tools are planned and not implemented yet (updates/cancellations currently work via REST APIs).
 
 ## Technologies Used
 - **Backend:** Python, FastAPI, Pydantic, MySQL, Uvicorn
