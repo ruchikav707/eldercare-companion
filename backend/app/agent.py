@@ -1,5 +1,8 @@
+
 import json
-from datetime import date
+import os
+import re
+from datetime import date, datetime, time, timedelta
 
 from app.agent_tools import (
     create_appointment,
@@ -7,6 +10,9 @@ from app.agent_tools import (
     list_appointments
 )
 from app.ai_client import GEMINI_MODEL, get_gemini_client
+
+
+DEMO_MODE = os.getenv("DEMO_MODE", "false").casefold() == "true"
 
 
 EMERGENCY_PHRASES = (
@@ -158,6 +164,7 @@ AVAILABLE_TOOLS = [
 
 SESSION_INTERACTIONS: dict[str, str] = {}
 PENDING_ACTIONS: dict[str, dict] = {}
+DEMO_DRAFTS: dict[str, dict] = {}
 
 
 CONFIRMATION_WORDS = {
@@ -186,6 +193,226 @@ def normalize_message(message: str) -> str:
     """Prepare a short reply for confirmation checking."""
 
     return message.strip().lower().rstrip(".!")
+
+
+def clean_assistant_reply(reply: str) -> str:
+    """Remove simple Markdown formatting unsupported by the chat UI."""
+
+    return (
+        reply
+        .replace("**", "")
+        .replace("__", "")
+        .strip()
+    )
+
+
+def format_time(appointment_at: str) -> str:
+    """Convert an ISO date-time into an easy-to-read time."""
+
+    parsed_datetime = datetime.fromisoformat(appointment_at)
+    return parsed_datetime.strftime("%I:%M %p").lstrip("0")
+
+
+def format_daily_plan(tool_result: dict, day_label: str) -> str:
+    """Turn the real daily-plan tool result into a friendly reply."""
+
+    appointments = tool_result.get("appointments", [])
+
+    if not appointments:
+        return f"You have no appointments scheduled for {day_label}."
+
+    if len(appointments) == 1:
+        appointment = appointments[0]
+        reply = (
+            f"You have one appointment scheduled for {day_label}: "
+            f"{appointment['title']} at "
+            f"{format_time(appointment['appointment_at'])}"
+        )
+
+        if appointment.get("location"):
+            reply += f" at {appointment['location']}"
+
+        if appointment.get("preparation_notes"):
+            reply += f". Remember: {appointment['preparation_notes']}"
+
+        return reply + "."
+
+    lines = [
+        f"You have {len(appointments)} appointments scheduled for "
+        f"{day_label}:"
+    ]
+
+    for appointment in appointments:
+        line = (
+            f"- {appointment['title']} at "
+            f"{format_time(appointment['appointment_at'])}"
+        )
+
+        if appointment.get("location"):
+            line += f" at {appointment['location']}"
+
+        lines.append(line)
+
+    return "\n".join(lines)
+
+
+def extract_time(message: str) -> time | None:
+    """Read a simple time such as 2 PM or 10:30 AM."""
+
+    match = re.search(
+        r"\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b",
+        message,
+        flags=re.IGNORECASE
+    )
+
+    if match is None:
+        return None
+
+    hour = int(match.group(1))
+    minute = int(match.group(2) or 0)
+    period = match.group(3).casefold()
+
+    if hour < 1 or hour > 12 or minute > 59:
+        return None
+
+    if period == "pm" and hour != 12:
+        hour += 12
+    elif period == "am" and hour == 12:
+        hour = 0
+
+    return time(hour=hour, minute=minute)
+
+
+def respond_in_demo_mode(message: str, session_id: str) -> dict:
+    """Run reliable demo workflows with real tools and no Gemini request."""
+
+    normalized_message = normalize_message(message)
+
+    if session_id in DEMO_DRAFTS:
+        selected_time = extract_time(message)
+
+        if selected_time is None:
+            return {
+                "reply": (
+                    "Please tell me the appointment time, for example "
+                    "2 PM or 10:30 AM."
+                ),
+                "tool_used": None,
+                "confirmation_required": False
+            }
+
+        draft = DEMO_DRAFTS.pop(session_id)
+        appointment_datetime = datetime.combine(
+            date.fromisoformat(draft["date"]),
+            selected_time
+        )
+
+        arguments = {
+            "title": draft["title"],
+            "appointment_at": appointment_datetime.isoformat(),
+            "location": draft.get("location"),
+            "preparation_notes": draft.get("preparation_notes")
+        }
+
+        PENDING_ACTIONS[session_id] = {
+            "tool_name": "create_appointment",
+            "arguments": arguments,
+            "demo_mode": True
+        }
+
+        return {
+            "reply": build_confirmation_message(arguments),
+            "tool_used": "create_appointment",
+            "confirmation_required": True
+        }
+
+    if "tomorrow" in normalized_message and any(
+        word in normalized_message
+        for word in ("what", "plan", "schedule", "scheduled")
+    ) and not any(
+        word in normalized_message
+        for word in ("add", "book", "create", "dentist")
+    ):
+        tomorrow = date.today() + timedelta(days=1)
+        tool_result = get_daily_plan(tomorrow.isoformat())
+
+        return {
+            "reply": format_daily_plan(tool_result, "tomorrow"),
+            "tool_used": "get_daily_plan",
+            "confirmation_required": False
+        }
+
+    if any(
+        phrase in normalized_message
+        for phrase in ("schedule a dentist", "book a dentist", "add a dentist")
+    ):
+        tomorrow = date.today() + timedelta(days=1)
+        selected_time = extract_time(message)
+
+        if selected_time is None:
+            DEMO_DRAFTS[session_id] = {
+                "title": "Dentist appointment",
+                "date": tomorrow.isoformat()
+            }
+
+            return {
+                "reply": (
+                    "What time would you like to schedule your dentist "
+                    "appointment for tomorrow?"
+                ),
+                "tool_used": None,
+                "confirmation_required": False
+            }
+
+        appointment_datetime = datetime.combine(tomorrow, selected_time)
+        arguments = {
+            "title": "Dentist appointment",
+            "appointment_at": appointment_datetime.isoformat(),
+            "location": None,
+            "preparation_notes": None
+        }
+
+        PENDING_ACTIONS[session_id] = {
+            "tool_name": "create_appointment",
+            "arguments": arguments,
+            "demo_mode": True
+        }
+
+        return {
+            "reply": build_confirmation_message(arguments),
+            "tool_used": "create_appointment",
+            "confirmation_required": True
+        }
+
+    if "appointment" in normalized_message and any(
+        word in normalized_message
+        for word in ("show", "list", "all")
+    ):
+        tool_result = list_appointments()
+        appointments = tool_result.get("appointments", [])
+
+        if not appointments:
+            reply = "You do not have any stored appointments."
+        else:
+            reply = (
+                f"You have {len(appointments)} stored appointments. "
+                "They are displayed on your appointment dashboard."
+            )
+
+        return {
+            "reply": reply,
+            "tool_used": "list_appointments",
+            "confirmation_required": False
+        }
+
+    return {
+        "reply": (
+            "Demo mode currently supports checking tomorrow's schedule "
+            "and scheduling a dentist appointment for tomorrow."
+        ),
+        "tool_used": None,
+        "confirmation_required": False
+    }
 
 
 def execute_read_tool(tool_name: str, arguments: dict) -> dict:
@@ -260,6 +487,21 @@ def complete_pending_action(
             "confirmation_required": False
         }
 
+    if pending_action.get("demo_mode"):
+        SESSION_INTERACTIONS.pop(session_id, None)
+
+        appointment = tool_result["appointment"]
+        reply = (
+            f"Your {appointment['title'].lower()} was saved successfully "
+            f"for {format_time(appointment['appointment_at'])}."
+        )
+
+        return {
+            "reply": reply,
+            "tool_used": "create_appointment",
+            "confirmation_required": False
+        }
+
     client = get_gemini_client()
 
     try:
@@ -283,7 +525,7 @@ def complete_pending_action(
         )
 
         SESSION_INTERACTIONS[session_id] = final_interaction.id
-        reply = final_interaction.output_text
+        reply = clean_assistant_reply(final_interaction.output_text)
 
     except Exception:
         SESSION_INTERACTIONS.pop(session_id, None)
@@ -314,6 +556,9 @@ def respond_to_message(
 
     if session_id in PENDING_ACTIONS:
         return complete_pending_action(message, session_id)
+
+    if DEMO_MODE:
+        return respond_in_demo_mode(message, session_id)
 
     client = get_gemini_client()
     previous_interaction_id = SESSION_INTERACTIONS.get(session_id)
@@ -352,7 +597,7 @@ def respond_to_message(
 
     if tool_call is None:
         return {
-            "reply": interaction.output_text,
+            "reply": clean_assistant_reply(interaction.output_text),
             "tool_used": None,
             "confirmation_required": False
         }
@@ -400,7 +645,7 @@ def respond_to_message(
     SESSION_INTERACTIONS[session_id] = final_interaction.id
 
     return {
-        "reply": final_interaction.output_text,
+        "reply": clean_assistant_reply(final_interaction.output_text),
         "tool_used": tool_call.name,
         "confirmation_required": False
     }
