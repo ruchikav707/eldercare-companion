@@ -20,7 +20,7 @@
 ### Scene 2: Solution Overview
 - **Timestamp:** 0:18 – 0:35
 - **Speaker:** Siya
-- **What Appears on Screen:** The ElderCare Companion interface showing a clean conversational window side-by-side with the React appointment dashboard.
+- **What Appears on Screen:** The solution overview slide introducing the simulated Alexa+ experience, natural dialogue, and safety guardrails.
 - **Exact Spoken Narration:** "Meet ElderCare Companion. Built for the Alexa+ track, it is a simulated Alexa+ experience providing a warm, simple conversational interface for older adults to manage their schedules easily."
 - **User Message:** N/A (App overview)
 - **Expected Assistant Response:** N/A
@@ -60,7 +60,7 @@
 ### Scene 7: Architecture
 - **Timestamp:** 2:10 – 2:30
 - **Speaker:** Ruchika
-- **What Appears on Screen:** Architecture diagram: React Frontend $\rightarrow$ FastAPI Backend $\rightarrow$ Gemini AI Agent $\rightarrow$ Tools $\rightarrow$ MySQL Database $\rightarrow$ Response.
+- **What Appears on Screen:** Architecture diagram: React Frontend → FastAPI Backend → Gemini AI Agent → Agent Tools → MySQL Database → Response.
 - **Exact Spoken Narration:** "The React interface sends the user’s message to FastAPI. The Gemini-powered agent understands the goal, selects an allowed tool, and the tool safely reads from or writes to MySQL. FastAPI then returns the result to the interface."
 - **User Message:** N/A (Architecture diagram)
 - **Expected Assistant Response:** N/A
@@ -79,3 +79,4 @@
 1. **Database Preparation:** Populate MySQL with a scheduled doctor appointment for tomorrow at 10:00 AM at City Care Clinic. Ensure the dentist test slot is clear before the creation sequence.
 2. **Video Editing Tip:** Cut out any network/API loading pauses so the final video flows smoothly within the ~2:42 target window.
 3. **Team Rehearsal:** Run through the complete workflow once together before hitting record to verify timing and smooth speaker handoffs.
+4. **Demo Reset:** Remove the dentist appointment created during rehearsal, restart the FastAPI backend to clear temporary session memory, and refresh the React frontend before recording.
